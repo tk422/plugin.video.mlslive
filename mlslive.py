@@ -59,7 +59,7 @@ class MLSLive:
         jar.load(cookie_file,ignore_discard=True)
         return jar
 
-    def postToken(self):
+    def postToken(self, token=None):
         """
         Get the token from MLBAM for MLS soccer.
         """
@@ -74,6 +74,11 @@ class MLSLive:
                    'longitude' : '-81.24808534522958',
                    'grant_type' : 'client_credentials',
                    'token' : 'BAMSDK_mlsoccer-F73A6101_prod_ce29c265-9094-4fb3-aed3-7237ed3cfe6e'}
+
+        if not token == None:
+            values['grant_type'] = 'urn:mlbam:params:oauth:grant_type:token'
+            values['token'] = token
+
         try:
             resp = opener.open(self.TOKEN_PAGE, urllib.urlencode(values))
         except:
@@ -129,6 +134,8 @@ class MLSLive:
 
         js_obj = json.loads(resp.read())
         print js_obj
+        token = self.postToken(js_obj['code'])
+        print "ACCESS TOKEN IS '" + token + "'"
         return True
 
 
