@@ -33,6 +33,7 @@ class MLSLive:
         self.USER_AGENT = 'BAMSDK/1.0.4 (mlsoccer-F73A6101; 1.0.0; google; handset) OnePlus ONE A2005 (ONE A2005_24_161227; Linux; 6.0.1; API 23)'
         self.TOKEN_PAGE = 'https://global-api.live-svcs.mlssoccer.com/token'
         self.LOGIN_PAGE = 'https://global-api.live-svcs.mlssoccer.com/v2/user/identity'
+        self.MATCHES_PAGE = 'https://api.mlsdigital.net/www.mlssoccer.com/matches?startdate=1488776400&enddate=1489377599'
         # resolution for images
         self.RES = '560x320'
         self.timeOffset = None
@@ -128,7 +129,7 @@ class MLSLive:
         try:
             resp = opener.open(req)
         except:
-            print "Unable to login"
+            print "B Unable to login"
             return False
         jar.save(filename=self.getCookieFile(), ignore_discard=True, ignore_expires=True)
 
@@ -137,6 +138,31 @@ class MLSLive:
         token = self.postToken(js_obj['code'])
         print "ACCESS TOKEN IS '" + token + "'"
         return True
+
+
+    def postMatches(self):
+        """
+        Get the matches within a time frame
+        @TODO take the start and end time and put them in the query string
+        """
+        jar = self.createCookieJar()
+        opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(jar),
+                                      urllib2.HTTPHandler(debuglevel=1),
+                                      urllib2.HTTPSHandler(debuglevel=1))
+        opener.addheaders = [('accept-version', '2.0.1'),
+                             ('Authorization', 'Basic bWF0Y2hkYXlfYW5kcm9pZDpKN3Q4dzhiRUJUYVVHWDJMZzJaTlZ5WXk=')]
+
+        try:
+            resp = opener.open(self.MATCHES_PAGE)
+        except:
+            print "ERROR GETTING MATCHES"
+            return False
+        jar.save(filename=self.getCookieFile(), ignore_discard=True, ignore_expires=True)
+
+        js_obj = json.loads(resp.read())
+        print js_obj
+
+        return None
 
 
     def getTimeOffset(self, games_xml):

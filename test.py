@@ -33,8 +33,10 @@ my_mls = mlslive.MLSLive()
 if not my_mls.login(options.user, options.password):
     print "*** Unable to authenticte with MLS live. please set username and password."
     sys.exit(1)
-else:
-    print "*** Logon successful"
+
+print "*** Logon successful"
+
+my_mls.postMatches()
 
 if options.month:
     # print the months games
