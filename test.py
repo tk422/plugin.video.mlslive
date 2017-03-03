@@ -25,6 +25,11 @@ elif options.password == None:
 
 my_mls = mlslive.MLSLive()
 
+#if not my_mls.getToken():
+#    print "*** Unbale to get token."
+#    sys.exit(1)
+#sys.exit(0)
+
 if not my_mls.login(options.user, options.password):
     print "*** Unable to authenticte with MLS live. please set username and password."
     sys.exit(1)

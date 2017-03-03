@@ -14,7 +14,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 '''
 
-import urllib, urllib2, xml.dom.minidom, cookielib, time, datetime
+import urllib, urllib2, json, cookielib, time, datetime 
 import _strptime
 
 
@@ -27,11 +27,12 @@ class MLSLive:
 
         self.CED_CONFIG = 'http://static.mlsdigital.net/mobile/v20/config.json'
         self.PUBLISH_POINT = 'http://live.mlssoccer.com/mlsmdl/servlets/publishpoint'
-        self.LOGIN_PAGE = 'https://live.mlssoccer.com/mlsmdl/secure/login'
         self.GAMES_PAGE_PREFIX = 'http://mobile.cdn.mlssoccer.com/iphone/v5/prod/games_for_week_'
-
         self.GAME_PREFIX = 'http://live.mlssoccer.com/mlsmdl/schedule?'
-
+        self.BEARER = 'Bearer 94vDO2IN1y963U8NO9Jw8omaG5q94Rht1ERjD6AEnKna90x04lf5Ty6brFsbYs8V'
+        self.USER_AGENT = 'BAMSDK/1.0.4 (mlsoccer-F73A6101; 1.0.0; google; handset) OnePlus ONE A2005 (ONE A2005_24_161227; Linux; 6.0.1; API 23)'
+        self.TOKEN_PAGE = 'https://global-api.live-svcs.mlssoccer.com/token'
+        self.LOGIN_PAGE = 'https://global-api.live-svcs.mlssoccer.com/v2/user/identity'
         # resolution for images
         self.RES = '560x320'
         self.timeOffset = None
@@ -58,7 +59,34 @@ class MLSLive:
         jar.load(cookie_file,ignore_discard=True)
         return jar
 
-    
+    def postToken(self):
+        """
+        Get the token from MLBAM for MLS soccer.
+        """
+        jar = self.createCookieJar()
+        opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(jar),
+                                      urllib2.HTTPHandler(debuglevel=1),
+                                      urllib2.HTTPSHandler(debuglevel=1))
+        opener.addheaders = [('Authorization', self.BEARER),
+                             ('User-Agent', self.USER_AGENT)]
+        values = { 'platform' : 'android',
+                   'latitude' : '42.966631256803325',
+                   'longitude' : '-81.24808534522958',
+                   'grant_type' : 'client_credentials',
+                   'token' : 'BAMSDK_mlsoccer-F73A6101_prod_ce29c265-9094-4fb3-aed3-7237ed3cfe6e'}
+        try:
+            resp = opener.open(self.TOKEN_PAGE, urllib.urlencode(values))
+        except:
+            print "Unable to login"
+            return False
+        jar.save(filename=self.getCookieFile(), ignore_discard=True, ignore_expires=True)
+
+        resp_json = resp.read()
+        jsobj = json.loads(resp_json)
+
+        return jsobj['access_token']
+
+
     def login(self, username, password):
         """
         Login to the MLS Live streaming service.
@@ -68,30 +96,40 @@ class MLSLive:
         @return: True if authentication is successful, otherwise, False.
         """
 
-        # setup the login values        
-        values = { 'username' : username,
-                   'password' : password }
+        token = self.postToken()
+        if token == None:
+            print "Unable to get token."
+            return False
+
+        js_obj = {'email': {'address': username},
+                  'password':{'value': password},
+                  'type':'email-password'}
+        js_data = json.dumps(js_obj)
 
         jar = self.createCookieJar()
-        opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(jar))#,
-        #urllib2.HTTPSHandler(debuglevel=1))
+        opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(jar),
+                                      urllib2.HTTPHandler(debuglevel=1),
+                                      urllib2.HTTPSHandler(debuglevel=1))
+        
+        rq_headers = {'Authorization': token,
+                      'User-Agent': self.USER_AGENT,
+                      'Content-Type': 'application/json',
+                      'Accept': 'application/vnd.identity-service+json; version=1.0',
+                      'Content-Length': len(js_data)}
+        
+        req = urllib2.Request(self.LOGIN_PAGE, data=js_data, headers=rq_headers)
+        
+
         try:
-            resp = opener.open(self.LOGIN_PAGE, urllib.urlencode(values))
+            resp = opener.open(req)
         except:
             print "Unable to login"
             return False
-        jar.save(ignore_discard=True)
+        jar.save(filename=self.getCookieFile(), ignore_discard=True, ignore_expires=True)
 
-        resp_xml = resp.read()
-        dom = xml.dom.minidom.parseString(resp_xml)
-
-        result_node = dom.getElementsByTagName('result')[0]
-        code_node = result_node.getElementsByTagName('code')[0]
-        
-        if code_node.firstChild.nodeValue == 'loginsuccess':
-            return True
-
-        return False
+        js_obj = json.loads(resp.read())
+        print js_obj
+        return True
 
 
     def getTimeOffset(self, games_xml):
