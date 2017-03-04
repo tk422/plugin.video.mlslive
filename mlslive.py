@@ -14,7 +14,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 '''
 
-import os, re, urllib, urllib2, json, cookielib, time, datetime 
+import os, re, urllib, urllib2, json, cookielib, datetime, uuid
 #import _strptime
 from urlparse import urlparse
 
@@ -68,10 +68,6 @@ class MLSLive:
         """
         Get the token from MLBAM for MLS soccer.
         @param token if specified, the toke to use for token authentication
-        @TODO generate a guid to use for the login token with grant_type is set
-              to client_credentials. Figure out if it changes each time you
-              log in.  Also figure out how long these tokens last for and if we
-              can save time by caching them.
         """
         jar = self.createCookieJar()
         opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(jar),
@@ -86,9 +82,11 @@ class MLSLive:
                    'latitude' : '61.172110800000000',
                    'longitude' : '149.83626080000000',
                    'grant_type' : 'client_credentials',
-                   'token' : 'BAMSDK_mlsoccer-F73A6101_prod_ce29c265-9094-4fb3-aed3-7237ed3cfe6e'}
+                   'token' : 'BAMSDK_mlsoccer-F73A6101_prod_'}
 
-        if not token == None:
+        if token == None:
+            values['token'] += str(uuid.uuid4())
+        else:
             values['grant_type'] = 'urn:mlbam:params:oauth:grant_type:token'
             values['token'] = token
 
