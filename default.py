@@ -166,19 +166,7 @@ def playGame(value_string):
     values = urlparse.parse_qs(value_string)
     title = values['title'][0]
     game = values['game'][0]
-    """
-    condensed = False
-    if 'condensed' in values.keys():
-        game = values['condensed'][0]
-        condensed = True
-    else:
-        game = values['game'][0]
 
-    if 'result' in values.keys():
-        if values['result'][0] == 'F':
-            createFinalMenu(game, title)
-            return
-    """
     mls = mlslive.MLSLive()
     streams = mls.getStreams(game)
 
@@ -203,33 +191,10 @@ def playGame(value_string):
         p = xbmc.Player()
         p.play(stream, li)
 
-    """
-    print 'MICAH stream is {0}'.format(stream)
-    if stream == '':
-        dialog = xbmcgui.Dialog()
-        dialog.ok(__language__(30015), __language__(30016))
-    else:
-        li = xbmcgui.ListItem(title)
-        li.setInfo( type="Video", infoLabels={"Title" : title})
-        p = xbmc.Player()
-        p.play(stream, li)
-    """
-
-
 if len(sys.argv[2]) == 0:
     if not authenticate() == None:
         createMainMenu()
 elif sys.argv[2] == '?id=live':
     createLiveMenu()
-elif sys.argv[2] == '?id=complete':
-    createMonthsMenu(complete = True)
-elif sys.argv[2][:7] == '?month=':
-    values = urlparse.parse_qs(sys.argv[2][1:])
-    createMonthMenu(values['month'][0])
-elif sys.argv[2][:11] == '?compmonth=':
-    values = urlparse.parse_qs(sys.argv[2][1:])
-    createMonthMenu(values['compmonth'][0], complete = True)
-elif sys.argv[2][:10] == "?condensed":
-    playGame(sys.argv[2][1:])
 elif sys.argv[2][:5] == "?game":
     playGame(sys.argv[2][1:])

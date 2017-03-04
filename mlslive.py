@@ -79,9 +79,12 @@ class MLSLive:
                                       urllib2.HTTPSHandler(debuglevel=1))
         opener.addheaders = [('Authorization', self.BEARER),
                              ('User-Agent', urllib.quote(self.USER_AGENT))]
+        # Mexico City 19.390519000000000,-99.42380640000000
+        # Anchorage 61.172110800000000,-149.83626080000000
+        # London, Ont 42.966631256803325,-81.24808534522958
         values = { 'platform' : 'android',
-                   'latitude' : '42.966631256803325',
-                   'longitude' : '-81.24808534522958',
+                   'latitude' : '61.172110800000000',
+                   'longitude' : '149.83626080000000',
                    'grant_type' : 'client_credentials',
                    'token' : 'BAMSDK_mlsoccer-F73A6101_prod_ce29c265-9094-4fb3-aed3-7237ed3cfe6e'}
 
@@ -156,7 +159,7 @@ class MLSLive:
             resp = opener.open(uri)
         except:
             print "Unable to get stream metadata"
-            return False
+            return None
         jar.save(filename=self.getCookieFile(), ignore_discard=True, ignore_expires=True)
 
         js_str = resp.read()
@@ -333,6 +336,8 @@ class MLSLive:
         uri = uri.replace('{scenario}', 'android')
         
         js_obj = self.getEvents(uri, token)
+        if js_obj == None:
+            return None
         playlist = js_obj['stream']['complete']
 
         streams = self.parsePlaylist(playlist, token)

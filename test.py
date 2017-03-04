@@ -32,6 +32,9 @@ if options.game == None:
         print '\t{0}) {1}'.format(game['optaId'], game_str) 
 else:
     streams = my_mls.getStreams(options.game)
+    if streams == None:
+        print "Unable to get streams..."
+        sys.exit(1)
     for stream in streams.keys():
         print stream + ' ' + streams[stream]
 sys.exit(0)
