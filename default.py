@@ -64,11 +64,11 @@ def createMonthsMenu(complete = False):
     xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
 
-def createMonthMenu(month, complete = False):
+def createLiveMenu(complete = False):
 
     mls = mlslive.MLSLive()
 
-    games = mls.getGames(month)
+    games = mls.getGames()
     if games == None:
         dialog = xbmcgui.Dialog()
         dialog.ok(__language__(30018), __language__(30019))
@@ -78,27 +78,14 @@ def createMonthMenu(month, complete = False):
 
     for game in games:
 
-        final = False
-        if 'result' in game.keys():
-            if game['result'].upper() == 'F':
-                final = True
-
-        # skip any finished games if showing live or upcomming
-        if final and not complete:
-            continue
-
-        # skip if showing completed and live or upcomming
-        if complete and not final:
-            continue
-
         title = mls.getGameString(game, __language__(30008))
         li = xbmcgui.ListItem(title)
-        values = {'game' : game['id'],
+        values = {'game' : game['optaId'],
                   'title' : title}
 
         # if the game has a result pass it along
-        if 'result' in game.keys():
-            values['result'] = game['result']
+        #if 'result' in game.keys():
+        #    values['result'] = game['result']
 
         xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]),
                                     url=sys.argv[0] + '?' + urllib.urlencode(values),
@@ -173,8 +160,13 @@ def authenticate():
 
 
 def playGame(value_string):
+    """
+    @TODO add new language keys
+    """
     values = urlparse.parse_qs(value_string)
     title = values['title'][0]
+    game = values['game'][0]
+    """
     condensed = False
     if 'condensed' in values.keys():
         game = values['condensed'][0]
@@ -186,9 +178,33 @@ def playGame(value_string):
         if values['result'][0] == 'F':
             createFinalMenu(game, title)
             return
-
+    """
     mls = mlslive.MLSLive()
-    stream = mls.getGameLiveStream(game, condensed)
+    streams = mls.getStreams(game)
+
+    bitrates = [int(x) for x in streams.keys()]
+    bitrates = [str(x) for x in reversed(sorted(bitrates)) ]
+
+    index = xbmcgui.Dialog().select("Select Bitrate", bitrates)
+
+    if index < 0:
+        dialog = xbmcgui.Dialog()
+        dialog.ok('title', 'body')
+        return
+
+    stream = streams[bitrates[index]]
+
+    if not stream:
+        dialog = xbmcgui.Dialog()
+        dialog.ok('title', 'body')
+    else:
+        li = xbmcgui.ListItem(title)
+        li.setInfo( type="Video", infoLabels={"Title" : title})
+        p = xbmc.Player()
+        p.play(stream, li)
+
+    """
+    print 'MICAH stream is {0}'.format(stream)
     if stream == '':
         dialog = xbmcgui.Dialog()
         dialog.ok(__language__(30015), __language__(30016))
@@ -197,13 +213,14 @@ def playGame(value_string):
         li.setInfo( type="Video", infoLabels={"Title" : title})
         p = xbmc.Player()
         p.play(stream, li)
+    """
 
 
 if len(sys.argv[2]) == 0:
     if not authenticate() == None:
         createMainMenu()
 elif sys.argv[2] == '?id=live':
-    createMonthsMenu()
+    createLiveMenu()
 elif sys.argv[2] == '?id=complete':
     createMonthsMenu(complete = True)
 elif sys.argv[2][:7] == '?month=':
