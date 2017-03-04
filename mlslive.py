@@ -44,7 +44,7 @@ class MLSLive:
         if hasattr(dt, 'total_seconds'):
             return dt.total_seconds()
         else:
-            return (td.microseconds + (td.seconds + td.days * 24 * 3600) * 10**6) / 10**6
+            return (dt.microseconds + (dt.seconds + dt.days * 24 * 3600) * 10**6) / 10**6
  
 
     def getAddonFolder(self):
